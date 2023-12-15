@@ -7,9 +7,11 @@ import cmath
 
 #Value which defines the line between divergence and convergence
 DIV_VALUE = 2
+DIV_VALUE_SQUARE = DIV_VALUE ** 2
 #Sets the resolution of sampling 
-RESOLUTION = 0.001
-ITERATION_COUNT = 50
+RESOLUTION = 0.005
+#Sets the iteration count when checking divergence
+ITERATION_COUNT = 1000
 #Setting the window dimensions
 MIN_WINDOW = complex(-2.,-2.)
 MAX_WINDOW = complex(2.,2.)
@@ -21,19 +23,23 @@ def f (z, c):
     except OverflowError:
         return float('inf')
 
-#Applies f iteratively with a complex constant c
+#Applies f iteratively with a complex constant c, and returns the iteration on which the value diverged or ITERATION_COUNT
 def iterated_f (c):
     value = c
-    for i in range(ITERATION_COUNT):
+    iter = 0
+    while iter < ITERATION_COUNT:
+        if value == float('inf') or (value.real**2 + value.imag**2) > DIV_VALUE_SQUARE:
+            break
         value = f(value, c)
-    return value
+        iter += 1
+    return iter
 
 def does_diverge(c):
-    value = np.absolute(iterated_f(c))
-    if value <= DIV_VALUE:
-        return False
-    else:
+    num_iter = iterated_f(c)
+    if num_iter == ITERATION_COUNT:
         return True
+    else:
+        return False
 
 #Grid of possible values for c, containing whether they converge or diverge
 div_grid =[]
@@ -47,9 +53,8 @@ for i1 in range(math.ceil((MAX_WINDOW.real - MIN_WINDOW.real)/RESOLUTION)):
     current_imag += RESOLUTION
 
 
-
-#Creating a color-coded visualization of the set.
-cmap = matplotlib.colors.ListedColormap(['black', 'white'])
+#Creating a black and white visualization of the set.
+cmap = matplotlib.colors.ListedColormap(['white', 'black'])
 plt.imshow(div_grid, cmap=cmap, interpolation='hermite')
 plt.axis('off')
 plt.title("Mandelbrot Set")
